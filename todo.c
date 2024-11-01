@@ -77,35 +77,38 @@ void addTodo()
         return;
     }
 
-    // Načtení a kontrola popisu úkolu
-    do
+    // Před čtením popisu vyčistíme buffer
+    clearInputBuffer();
+
+    printf("Zadejte popis úkolu: ");
+    if (fgets(todos[todoCount].description, MAX_LENGTH, stdin) == NULL)
     {
-        printf("Zadejte popis úkolu (1-%d znaků): ", MAX_LENGTH - 1);
-        if (fgets(todos[todoCount].description, MAX_LENGTH, stdin) == NULL)
-        {
-            printf("Chyba při čtení vstupu!\n");
-            return;
-        }
+        printf("Chyba při čtení vstupu!\n");
+        return;
+    }
 
-        // Odstranění znaku nového řádku
-        todos[todoCount].description[strcspn(todos[todoCount].description, "\n")] = 0;
+    // Odstranění znaku nového řádku z popisu
+    todos[todoCount].description[strcspn(todos[todoCount].description, "\n")] = 0;
 
-        // Kontrola prázdného vstupu
-        if (isEmptyString(todos[todoCount].description))
-        {
-            printf("Popis úkolu nemůže být prázdný!\n");
-            continue;
-        }
-        break;
-    } while (1);
+    printf("Zadejte prioritu (1-3): ");
+    if (scanf("%d", &todos[todoCount].priority) != 1)
+    {
+        printf("Neplatná priorita!\n");
+        clearInputBuffer(); // Vyčistíme buffer po neplatném vstupu
+        return;
+    }
 
-    // Načtení a kontrola priority
-    todos[todoCount].priority = getValidNumber(1, 3, "Zadejte prioritu (1 = nízká, 2 = střední, 3 = vysoká): ");
+    // Kontrola rozsahu priority
+    if (todos[todoCount].priority < 1 || todos[todoCount].priority > 3)
+    {
+        printf("Priorita musí být mezi 1 a 3!\n");
+        return;
+    }
 
     todos[todoCount].completed = 0;
     todoCount++;
 
-    printf("Úkol byl úspěšně přidán!\n");
+    printf("Úkol byl přidán!\n");
 }
 
 // Funkce pro zobrazení všech úkolů
@@ -137,17 +140,24 @@ void markCompleted()
     }
 
     listTodos();
-    int index = getValidNumber(1, todoCount, "Zadejte číslo úkolu ke splnění: ");
 
-    if (todos[index - 1].completed)
+    int index;
+    printf("Zadejte číslo úkolu ke splnění: ");
+    if (scanf("%d", &index) != 1)
     {
-        printf("Tento úkol už je označený jako splněný!\n");
+        printf("Neplatný vstup!\n");
+        clearInputBuffer(); // Vyčistíme buffer po neplatném vstupu
+        return;
     }
-    else
+
+    if (index < 1 || index > todoCount)
     {
-        todos[index - 1].completed = 1;
-        printf("Úkol byl označen jako splněný!\n");
+        printf("Neplatné číslo úkolu!\n");
+        return;
     }
+
+    todos[index - 1].completed = 1;
+    printf("Úkol označen jako splněný!\n");
 }
 
 // Hlavní menu
@@ -168,7 +178,12 @@ int main()
     do
     {
         showMenu();
-        scanf("%d", &choice);
+        if (scanf("%d", &choice) != 1)
+        {
+            printf("Neplatná volba!\n");
+            clearInputBuffer(); // Vyčistíme buffer po neplatném vstupu
+            continue;
+        }
 
         switch (choice)
         {

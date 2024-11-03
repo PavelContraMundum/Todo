@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define MAX_TODOS 100
 #define MAX_LENGTH 100
+#define FILENAME "todos.txt"
 
 struct Todo
 {
@@ -15,6 +17,68 @@ struct Todo
 // Globální proměnné
 struct Todo todos[MAX_TODOS];
 int todoCount = 0;
+
+// Nová funkce pro uložení úkolů do souboru
+void saveTodos()
+{
+    FILE *file = fopen(FILENAME, "w");
+    if (file == NULL)
+    {
+        printf("Chyba: Nelze otevřít soubor pro zápis!\n");
+        return;
+    }
+
+    // První řádek obsahuje počet úkolů
+    fprintf(file, "%d\n", todoCount);
+
+    // Zápis jednotlivých úkolů
+    for (int i = 0; i < todoCount; i++)
+    {
+        fprintf(file, "%s\n%d\n%d\n",
+                todos[i].description,
+                todos[i].completed,
+                todos[i].priority);
+    }
+
+    fclose(file);
+    printf("Úkoly byly úspěšně uloženy do souboru.\n");
+}
+
+// Nová funkce pro načtení úkolů ze souboru
+void loadTodos()
+{
+    FILE *file = fopen(FILENAME, "r");
+    if (file == NULL)
+    {
+        printf("Soubor s úkoly neexistuje. Začínáme s prázdným seznamem.\n");
+        return;
+    }
+
+    // Čtení počtu úkolů
+    if (fscanf(file, "%d\n", &todoCount) != 1)
+    {
+        printf("Chyba při čtení souboru!\n");
+        fclose(file);
+        return;
+    }
+
+    // Čtení jednotlivých úkolů
+    for (int i = 0; i < todoCount; i++)
+    {
+        if (fgets(todos[i].description, MAX_LENGTH, file) == NULL)
+            break;
+        // Odstranění znaku nového řádku
+        todos[i].description[strcspn(todos[i].description, "\n")] = 0;
+
+        if (fscanf(file, "%d\n%d\n",
+                   &todos[i].completed,
+                   &todos[i].priority) != 2)
+            break;
+    }
+
+    fclose(file);
+    printf("Úkoly byly načteny ze souboru.\n");
+}
 
 // Nová funkce pro vyčištění vstupního bufferu
 void clearInputBuffer()
@@ -109,6 +173,7 @@ void addTodo()
     todoCount++;
 
     printf("Úkol byl přidán!\n");
+    saveTodos(); // Automatické uložení po přidání
 }
 
 // Funkce pro zobrazení všech úkolů
@@ -158,6 +223,7 @@ void markCompleted()
 
     todos[index - 1].completed = 1;
     printf("Úkol označen jako splněný!\n");
+    saveTodos(); // Automatické uložení po změně
 }
 
 // Hlavní menu
@@ -173,6 +239,9 @@ void showMenu()
 
 int main()
 {
+    // Načtení úkolů při spuštění
+    loadTodos();
+
     int choice;
 
     do
